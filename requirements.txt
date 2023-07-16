@@ -1,0 +1,6 @@
+osmium
+numpy
+matplotlib
+scipy
+Pillow
+pyyaml

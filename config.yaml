@@ -1,0 +1,5 @@
+xml_file: /Users/jaime/Downloads/map-2.xml
+postal_code_range:
+  start: 5300
+  end: 5400
+postal_code_tag: addr:postcode
