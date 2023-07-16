@@ -1,3 +1,5 @@
 /.DS_Store
 /.venv
 /output.png
+/polygons.yaml
+/__pycache__
