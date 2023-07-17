@@ -1,9 +1,11 @@
+import os
 import osmium
 import numpy as np
-from scipy.spatial import ConvexHull
+import alphashape
+from shapely.geometry import MultiPolygon
 import yaml
 import json
-import os
+import re
 from web_server import start_web_server
 
 
@@ -24,8 +26,8 @@ class PostalCodeHandler(osmium.SimpleHandler):
                     break
 
     def _is_valid_postal_code(self, postal_code):
-        code = postal_code[:4]  # Extract first four digits of postal code
-        return code.isdigit()
+        pattern = r"[0-9]{4} ?[A-Za-z]{2}"
+        return re.match(pattern, postal_code) is not None
 
 
 def extract_points(xml_file, postal_code_ranges, point_clouds_file):
@@ -59,15 +61,20 @@ def calculate_outer_boundaries(point_clouds):
 
     for cloud in point_clouds.values():
         points_array = np.array(cloud['points'])
-        hull = ConvexHull(points_array)
-        polygons[(cloud['start'], cloud['end'])] = points_array[hull.vertices]
+        alpha = 45
+        hull = alphashape.alphashape(points_array, alpha)
+        while type(hull) is MultiPolygon:
+            alpha = alpha - 1
+            hull = alphashape.alphashape(points_array, alpha) 
+        polygons[(cloud['start'], cloud['end'])] = hull
 
     return polygons
 
 
 def generate_geojson(polygons, geojson_file):
     features = []
-    for (start, end), points in polygons.items():
+    for (start, end), hull in polygons.items():
+        coordinates = np.array(list(hull.exterior.coords))
         feature = {
             "type": "Feature",
             "properties": {
@@ -76,7 +83,7 @@ def generate_geojson(polygons, geojson_file):
             },
             "geometry": {
                 "type": "Polygon",
-                "coordinates": [points.tolist()]
+                "coordinates": [coordinates.tolist()]
             }
         }
         features.append(feature)

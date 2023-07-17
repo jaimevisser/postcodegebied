@@ -1,7 +1,7 @@
 osmium
 numpy
 matplotlib
-scipy
 alphashape
+shapely==1.8.5
 Pillow
 pyyaml
