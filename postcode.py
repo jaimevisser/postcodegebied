@@ -2,8 +2,12 @@ import os
 import osmium
 import numpy as np
 from scipy.spatial import ConvexHull
-from PIL import Image, ImageDraw
 from yaml_utils import save_polygons_to_yaml, load_polygons_from_yaml
+import yaml
+import json
+import http.server
+import socketserver
+import webbrowser
 
 
 class PostalCodeHandler(osmium.SimpleHandler):
@@ -43,43 +47,54 @@ def extract_outer_boundaries(xml_file, postal_code_ranges):
     return polygons
 
 
-def draw_polygon(polygon, file_path):
-    canvas_size = (2000, 2000)
-    padding = 10
+def generate_geojson(polygons, geojson_file):
+    features = []
+    for (start, end), points in polygons.items():
+        feature = {
+            "type": "Feature",
+            "properties": {
+                "start": start,
+                "end": end
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [points.tolist()]
+            }
+        }
+        features.append(feature)
 
-    min_x, min_y = np.min(polygon[:, 0]), np.min(polygon[:, 1])
-    max_x, max_y = np.max(polygon[:, 0]), np.max(polygon[:, 1])
-    polygon_width = max_x - min_x
-    polygon_height = max_y - min_y
+    data = {
+        "type": "FeatureCollection",
+        "features": features
+    }
 
-    # Calculate the scale factor for both width and height, considering the padding
-    scale_factor = min(
-        (canvas_size[0] - 2 * padding) / polygon_width,
-        (canvas_size[1] - 2 * padding) / polygon_height
-    )
+    with open(geojson_file, "w") as file:
+        json.dump(data, file)
 
-    # Apply the scale factor and padding to the polygon
-    scaled_polygon = [(int((x - min_x) * scale_factor) + padding, int((y - min_y) * scale_factor) + padding)
-                      for x, y in polygon]
 
-    image = Image.new("RGB", canvas_size, color="white")
-    draw = ImageDraw.Draw(image)
-    draw.polygon(scaled_polygon, outline="black", fill=None)
-
-    image.save(file_path, "PNG")
+def start_web_server(port):
+    Handler = http.server.SimpleHTTPRequestHandler
+    with socketserver.TCPServer(("", port), Handler) as httpd:
+        print(f"Web server started on port {port}. Press Ctrl+C to stop.")
+        webbrowser.open(f"http://localhost:{port}/map.html")
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            pass
+        httpd.server_close()
+        print("Web server stopped.")
 
 
 if __name__ == '__main__':
-    import yaml
-
     with open('config.yaml') as file:
         config = yaml.load(file, Loader=yaml.FullLoader)
 
     xml_file = config['xml_file']
     postal_code_ranges = [(int(r['start']), int(r['end'])) for r in config['postal_code_ranges']]
     postal_code_tag = config['postal_code_tag']
-    output_png_file = "output.png"
     polygons_yaml_file = "polygons.yaml"
+    geojson_file = "polygons.geojson"
+    web_server_port = 8000
 
     try:
         if not os.path.exists(polygons_yaml_file):
@@ -88,8 +103,9 @@ if __name__ == '__main__':
         else:
             polygons = load_polygons_from_yaml(polygons_yaml_file)
 
-        first_range = next(iter(polygons))
-        draw_polygon(polygons[first_range], output_png_file)
-        print(f"Outer boundary polygon saved as {output_png_file}")
+        generate_geojson(polygons, geojson_file)
+        print(f"GeoJSON file saved as {geojson_file}")
+
+        start_web_server(web_server_port)
     except ValueError as e:
         print(e)
