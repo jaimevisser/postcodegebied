@@ -2,5 +2,6 @@ osmium
 numpy
 matplotlib
 scipy
+alphashape
 Pillow
 pyyaml

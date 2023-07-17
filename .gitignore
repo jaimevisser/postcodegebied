@@ -1,6 +1,5 @@
 /.DS_Store
 /.venv
-/output.png
-/polygons.yaml
 /__pycache__
 polygons.geojson
+point_clouds.json

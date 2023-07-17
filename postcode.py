@@ -3,6 +3,7 @@ import numpy as np
 from scipy.spatial import ConvexHull
 import yaml
 import json
+import os
 from web_server import start_web_server
 
 
@@ -27,22 +28,39 @@ class PostalCodeHandler(osmium.SimpleHandler):
         return code.isdigit()
 
 
-def extract_points(xml_file, postal_code_ranges):
+def extract_points(xml_file, postal_code_ranges, point_clouds_file):
+    if os.path.exists(point_clouds_file):
+        with open(point_clouds_file, 'r') as file:
+            point_clouds = json.load(file)
+        return point_clouds
+
     handler = PostalCodeHandler(postal_code_ranges)
     handler.apply_file(xml_file)
-    return handler.point_clouds
+    point_clouds = {
+        str(start) + '-' + str(end): {
+            'start': start,
+            'end': end,
+            'points': points
+        }
+        for (start, end), points in handler.point_clouds.items()
+    }
+
+    with open(point_clouds_file, 'w') as file:
+        json.dump(point_clouds, file)
+
+    return point_clouds
 
 
 def calculate_outer_boundaries(point_clouds):
     polygons = {}
 
     if not point_clouds:
-        raise ValueError("No points found for the given postal code ranges.")
+        raise ValueError("No point clouds found for the given postal code ranges.")
 
-    for (start, end), points in point_clouds.items():
-        points_array = np.array(points)
+    for cloud in point_clouds.values():
+        points_array = np.array(cloud['points'])
         hull = ConvexHull(points_array)
-        polygons[(start, end)] = points_array[hull.vertices]
+        polygons[(cloud['start'], cloud['end'])] = points_array[hull.vertices]
 
     return polygons
 
@@ -79,11 +97,12 @@ if __name__ == '__main__':
     xml_file = config['xml_file']
     postal_code_ranges = [(int(r['start']), int(r['end'])) for r in config['postal_code_ranges']]
     postal_code_tag = config['postal_code_tag']
+    point_clouds_file = "point_clouds.json"
     geojson_file = "polygons.geojson"
     web_server_port = 8000
 
     try:
-        point_clouds = extract_points(xml_file, postal_code_ranges)
+        point_clouds = extract_points(xml_file, postal_code_ranges, point_clouds_file)
         polygons = calculate_outer_boundaries(point_clouds)
         generate_geojson(polygons, geojson_file)
         print(f"GeoJSON file saved as {geojson_file}")
