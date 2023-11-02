@@ -109,10 +109,11 @@ if __name__ == '__main__':
     web_server_port = 8000
 
     try:
-        point_clouds = extract_points(xml_file, postal_code_ranges, point_clouds_file)
-        polygons = calculate_outer_boundaries(point_clouds)
-        generate_geojson(polygons, geojson_file)
-        print(f"GeoJSON file saved as {geojson_file}")
+        if not os.path.isfile(geojson_file):
+            point_clouds = extract_points(xml_file, postal_code_ranges, point_clouds_file)
+            polygons = calculate_outer_boundaries(point_clouds)
+            generate_geojson(polygons, geojson_file)
+            print(f"GeoJSON file saved as {geojson_file}")
 
         start_web_server(web_server_port)
     except ValueError as e:

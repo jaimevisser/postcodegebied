@@ -6,6 +6,7 @@
     <style>
         #map {
             height: 500px;
+            width: 600px;
         }
     </style>
 </head>
@@ -15,7 +16,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
     <script>
         // Initialize the map
-        var map = L.map('map').setView([52.379189, 4.899431], 10); // Set initial center and zoom level
+        var map = L.map('map').fitBounds([
+            [51.95478062156734, 4.69070982949159],
+            [51.24636123356993, 5.9646805959904645]
+        ]); // Set initial center and zoom level
 
         // Add the OpenStreetMap tile layer
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
