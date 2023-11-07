@@ -1,39 +1,58 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Leaflet Map with GeoJSON</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css"
+    />
     <style>
-        #map {
-            height: 500px;
-            width: 600px;
-        }
+      html body {
+        padding: 0;
+        margin: 0;
+      }
+      #map {
+        height: 100vh;
+        width: 100vw;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div id="map"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
     <script>
-        // Initialize the map
-        var map = L.map('map').fitBounds([
-            [51.95478062156734, 4.69070982949159],
-            [51.24636123356993, 5.9646805959904645]
-        ]); // Set initial center and zoom level
+      // Initialize the map
+      var map = L.map("map").fitBounds([
+        [51.95478062156734, 4.69070982949159],
+        [51.24636123356993, 5.9646805959904645],
+      ]); // Set initial center and zoom level
 
-        // Add the OpenStreetMap tile layer
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(map);
+      // Add the OpenStreetMap tile layer
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap contributors",
+      }).addTo(map);
 
-        // Load the GeoJSON data and add it to the map
-        fetch('polygons.geojson')
-            .then(function (response) {
-                return response.json();
-            })
-            .then(function (data) {
-                L.geoJSON(data).addTo(map);
-            });
+      // Load the GeoJSON data and add it to the map
+      fetch("polygons.geojson")
+        .then(function (response) {
+          return response.json();
+        })
+        .then(function (data) {
+          L.geoJSON(data, {
+            onEachFeature: function (feature, layer) {
+              layer.bindTooltip(feature.properties.tooltip);
+            },
+            style: function (feature) {
+              return {
+                fillColor: feature.properties.colour,
+                color: "white",
+                weight: 2,
+                opacity: 1,
+              };
+            },
+          }).addTo(map);
+        });
     </script>
-</body>
+  </body>
 </html>

@@ -3,3 +3,4 @@
 /__pycache__
 polygons.geojson
 point_clouds.json
+/data

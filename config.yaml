@@ -1,19 +1,2 @@
 xml_file: /Users/jaime/Downloads/netherlands-latest.osm
-postal_code_ranges:
-  - start: 4140
-    end: 4200
-  - start: 4247
-    end: 4300
-  - start: 5270
-    end: 5300
-  - start: 5300
-    end: 5400
-  - start: 5423
-    end: 5460
-  - start: 5500
-    end: 5690
-  - start: 5700
-    end: 5735
-  - start: 5750
-    end: 5800
-postal_code_tag: addr:postcode
+postal_code_tag: addr:postcode6
