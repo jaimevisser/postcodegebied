@@ -20,7 +20,8 @@ def gen_postal_codes():
         '12': '#8A2BE2',  # Blue Violet
         '13': '#00FF7F',  # Spring Green
         '14': '#FF6347',  # Tomato
-        '15': '#40E0D0'   # Turquoise
+        '15': '#40E0D0',   # Turquoise
+        '16': '#000080' # Dark blue
     }
 
     # Remove " i.o" using regex

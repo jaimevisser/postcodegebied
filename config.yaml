@@ -1,2 +1,2 @@
-xml_file: /Users/jaime/Downloads/netherlands-latest.osm
-postal_code_tag: addr:postcode6
+xml_file: ./data/netherlands-latest.osm
+postal_code_tag: addr:postcode

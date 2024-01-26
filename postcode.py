@@ -21,16 +21,21 @@ class PostalCodeHandler(osmium.SimpleHandler):
     def __init__(self, postal_code_ranges):
         super(PostalCodeHandler, self).__init__()
         self.postal_code_ranges = postal_code_ranges
+        self.pc_count = 0
+        self.node_count = 0
 
     def node(self, n):
-        if postal_code_tag in n.tags and self._is_valid_postal_code(n.tags[postal_code_tag]):
-            postal_code = int(n.tags[postal_code_tag][:4])  # Extract first four digits of postal code
-            for pcr in self.postal_code_ranges:
-                if int(pcr['start']) <= postal_code <= int(pcr['end']):
-                    if 'points' not in pcr:
-                        pcr['points'] = []
-                    pcr['points'].append((n.location.lon, n.location.lat))
-                    break
+        self.node_count+=1
+        if postal_code_tag in n.tags:
+            if self._is_valid_postal_code(n.tags[postal_code_tag]):
+                self.pc_count+=1
+                postal_code = int(n.tags[postal_code_tag][:4])  # Extract first four digits of postal code
+                for pcr in self.postal_code_ranges:
+                    if int(pcr['start']) <= postal_code <= int(pcr['end']):
+                        if 'points' not in pcr:
+                            pcr['points'] = []
+                        pcr['points'].append((n.location.lon, n.location.lat))
+                        break
 
     def _is_valid_postal_code(self, postal_code):
         pattern = r"[0-9]{4} ?[A-Za-z]{2}"
@@ -43,6 +48,7 @@ def extract_points(xml_file, postal_code_ranges):
     if len(uncached) > 0:
         handler = PostalCodeHandler(uncached)
         handler.apply_file(xml_file)
+        print(f"{handler.pc_count}/{handler.node_count} nodes processed")
 
         pointcache.update_all(handler.postal_code_ranges)
 
@@ -65,7 +71,8 @@ def calculate_boundary(cloud):
 def calculate_outer_boundaries(point_clouds):
 
     if not point_clouds:
-        raise ValueError("No point clouds found for the given postal code ranges.")
+        print("No pointclouds need boundary calculations")
+        return []
     
     point_clouds = [c for c in point_clouds if 'points' in c]
     point_clouds = [c for c in point_clouds if len(c['points']) > 0]
@@ -124,7 +131,7 @@ if __name__ == '__main__':
     postal_code_tag = config['postal_code_tag']
     point_clouds_file = "data/point_clouds.json"
     geojson_file = "polygons.geojson"
-    web_server_port = 8800
+    web_server_port = 8880
 
     try:
         if not os.path.isfile(geojson_file):
